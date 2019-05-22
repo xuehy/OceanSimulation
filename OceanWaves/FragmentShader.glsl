@@ -51,16 +51,13 @@ void main (void) {
 	vec3 R = reflect(- viewDir, norm);
 	fresnel = fresnelBias + fresnelScale * pow(min(0.0, 1.0-dot(-R, norm)), fresnelPower);
 	vec4 skySpecular = texture(skybox, R).rgba * vec4(fresnel);
-	vec4 skyDiffuse = vec4(1.0 - fresnel) * texture(skybox, R).rgba;
-
-   
 
     // compute sky texture
     float ambient_contribution  = 0.30;
     float diffuse_contribution  = 0.30;
     float specular_contribution = 1.80;
  
-    fragColor = ambient_color  * ambient_contribution + specular_contribution * skySpecular * sunSpecular + diffuse_contribution * diffuse * skyDiffuse;
+    fragColor = ambient_color  * ambient_contribution + specular_contribution * skySpecular * sunSpecular + diffuse_contribution * diffuse;
 //            ambient_color  * ambient_contribution  * c +
 //            diffuse_color  * diffuse_contribution  * c * max(d, 0) +
 //                    (facing ?
