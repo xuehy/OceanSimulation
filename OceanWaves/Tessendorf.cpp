@@ -12,8 +12,8 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 	h_tilde_dx = new complex[N * N];
 	h_tilde_dz = new complex[N * N];
 	fft = new cFFT(N);
-	vertices = new wave_vertex[Nplus1 * Nplus1];
-	indices = new unsigned int[Nplus1 * Nplus1 * 10];
+	vertices = new wave_vertex[(long long)Nplus1 * (long long)Nplus1];
+	indices = new unsigned int[(long long)Nplus1 * (long long)Nplus1 * 10];
 
 	int index;
 	complex htilde0, htilde0mk_conj;
@@ -395,8 +395,8 @@ void Ocean::render(float t, glm::vec3 light_pos, glm::mat4 Projection, glm::mat4
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
 	// repeat to make 10 x 10 fields
-	for (int j = 0; j < 10; j++) {
-		for (int i = 0; i < 10; i++) {
+	for (int j = 0; j < 30; j++) {
+		for (int i = 0; i < 30; i++) {
 			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * i, 0, length * -j));
 			Model = glm::scale(Model, glm::vec3(1.1f, 1.1f, 1.1f));
 			

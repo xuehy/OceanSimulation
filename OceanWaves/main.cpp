@@ -9,6 +9,7 @@
 #include "common.h"
 using namespace std;
 
+bool quit = false;
 int Grid_Size = 64;
 float field_size = 64;
 // rotation angles and viewpoint
@@ -42,7 +43,10 @@ void processInput(GLFWwindow* window)
 		cameraFront = glm::vec3(0, 0, -50);
 		fov = 45.0f;
 	}
-
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		quit = true;
+	}
 }
 
 void mouse_callback(GLFWwindow * window, double xpos, double ypos)
@@ -126,12 +130,12 @@ int main()
 	GLuint skyShader = LoadShaders("skyvertex.glsl", "skyfragment.glsl");
 	vector<std::string> faces
 	{
-		"skybox/right.jpg",
-		"skybox/left.jpg",
-		"skybox/top.jpg",
-		"skybox/bottom.jpg",
-		"skybox/front.jpg",
-		"skybox/back.jpg"
+		"cloud/08/sky8_RT.jpg",
+		"cloud/08/sky8_LF.jpg",
+		"cloud/08/sky8_UP.jpg",
+		"cloud/08/sky8_DN.jpg",
+		"cloud/08/sky8_BK.jpg",
+		"cloud/08/sky8_FR.jpg"
 	};
 	GLuint skyTexture = loadCubemap(faces);
 	GLuint skyVAO, skyVBO;
@@ -146,7 +150,7 @@ int main()
 	glUniform1i(glGetUniformLocation(skyShader, "skybox"), 0);
 	glBindVertexArray(0);
 
-	while (true)
+	while (!quit)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
@@ -162,22 +166,22 @@ int main()
 		);
 	
 		
-		light_position = glm::vec3(1000.0f, 100.0f, -1000.0f);
+		light_position = glm::vec3(1000.0f, 1000.0f, -1000.0f);
 		myOcean.render(elapsedTime * 10.0, light_position, Projection, View, Model, true);
 		
-		//glDepthFunc(GL_LEQUAL);
-		//glUseProgram(skyShader);
-		//View = glm::mat4(glm::mat3(View)); // remove translation from the view matrix
-		//glUniformMatrix4fv(glGetUniformLocation(skyShader, "view"), 1, GL_FALSE, &View[0][0]);
-		//glUniformMatrix4fv(glGetUniformLocation(skyShader, "projection"), 1, GL_FALSE, &Projection[0][0]);
+		glDepthFunc(GL_LEQUAL);
+		glUseProgram(skyShader);
+		View = glm::mat4(glm::mat3(View)); // remove translation from the view matrix
+		glUniformMatrix4fv(glGetUniformLocation(skyShader, "view"), 1, GL_FALSE, &View[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(skyShader, "projection"), 1, GL_FALSE, &Projection[0][0]);
 
-		//// skybox cube
-		//glBindVertexArray(skyVAO);
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, skyTexture);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
-		//glBindVertexArray(0);
-		//glDepthFunc(GL_LESS); // set depth function back to default
+		// skybox cube
+		glBindVertexArray(skyVAO);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindVertexArray(0);
+		glDepthFunc(GL_LESS); // set depth function back to default
 		
 		glfwPollEvents();
 		glfwSwapBuffers(window);
