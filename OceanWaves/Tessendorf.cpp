@@ -1,5 +1,5 @@
 #include "Tessendorf.h"
-Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, const bool option) :
+Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option, GLuint cubemapTexture) :
 	g(9.81), option(option), N(N), Nplus1(N + 1), A(A), w(w), length(length),
 	vertices(0), indices(0), h_tilde(0), h_tilde_slopex(0), h_tilde_slopez(0),
 	h_tilde_dx(0), h_tilde_dz(0), fft(0)
@@ -81,11 +81,12 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 		}
 	glProgram = LoadShaders("VertexShader.glsl", "FragmentShader.glsl");
 	
-	light_position = glGetUniformLocation(glProgram, "light_position");
+	light_direction = glGetUniformLocation(glProgram, "light_direction");
 	projection = glGetUniformLocation(glProgram, "Projection");
 	view = glGetUniformLocation(glProgram, "View");
 	model = glGetUniformLocation(glProgram, "Model");
-
+	viewPosID = glGetUniformLocation(glProgram, "viewPos");
+	skyBoxID = glGetUniformLocation(glProgram, "skybox");
 	glGenBuffers(1, &vbo_vertices);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(wave_vertex) * (Nplus1) * (Nplus1), vertices, GL_DYNAMIC_DRAW);
@@ -93,6 +94,11 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 	glGenBuffers(1, &vbo_indices);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_count * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+	glUseProgram(glProgram);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+	glUniform1i(skyBoxID, 0);
 }
 
 Ocean::~Ocean()
@@ -366,7 +372,7 @@ void Ocean::evaluateWavesFFT(float t)
 	}
 }
 
-void Ocean::render(float t, glm::vec3 light_pos, glm::mat4 Projection, glm::mat4 View, glm::mat4 Model, bool use_fft)
+void Ocean::render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4 View, glm::mat4 Model, glm::vec3 viewPos, bool use_fft)
 {
 	static bool eval = false;
 	if (!use_fft && !eval) {
@@ -378,11 +384,11 @@ void Ocean::render(float t, glm::vec3 light_pos, glm::mat4 Projection, glm::mat4
 	}
 
 	glUseProgram(glProgram);
-	glUniform3f(light_position, light_pos.x, light_pos.y, light_pos.z);
+	glUniform3f(light_direction, light_dir.x, light_dir.y, light_dir.z);
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &Projection[0][0]);
 	glUniformMatrix4fv(view, 1, GL_FALSE, &View[0][0]);
 	glUniformMatrix4fv(model, 1, GL_FALSE, &Model[0][0]);
-
+	glUniform3f(viewPosID, viewPos.x, viewPos.y, viewPos.z);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
 	// dont use glBufferData to avoid reallocationg the data store
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(wave_vertex) * Nplus1 * Nplus1, vertices);
@@ -395,10 +401,10 @@ void Ocean::render(float t, glm::vec3 light_pos, glm::mat4 Projection, glm::mat4
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
 	// repeat to make 10 x 10 fields
-	for (int j = 0; j < 30; j++) {
-		for (int i = 0; i < 30; i++) {
-			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * i, 0, length * -j));
-			Model = glm::scale(Model, glm::vec3(1.1f, 1.1f, 1.1f));
+	for (int j = 0; j < 60; j++) {
+		for (int i = 0; i < 60; i++) {
+			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i - 30), 0, length * -(j - 30)));
+			Model = glm::scale(Model, glm::vec3(1.05f, 1.05f, 1.05f));
 			
 			glUniformMatrix4fv(model, 1, GL_FALSE, &Model[0][0]);
 			glDrawElements(option ? GL_LINES : GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, 0);

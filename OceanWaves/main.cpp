@@ -114,20 +114,6 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	GLuint programID = LoadShaders("VertexShader.glsl", "FragmentShader.glsl");
-
-	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(0.0f, 32.0f), field_size, false);
-	// model view projection matrices and light position
-	glm::mat4 Projection = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
-	glm::mat4 View = glm::lookAt(
-		cameraPos,
-		cameraPos + cameraFront,
-		cameraUp
-	);
-	glm::mat4 Model = glm::mat4(1.0f);
-	glm::vec3 light_position;
-
-	// sky renderer
-	GLuint skyShader = LoadShaders("skyvertex.glsl", "skyfragment.glsl");
 	vector<std::string> faces
 	{
 		"cloud/08/sky8_RT.jpg",
@@ -138,6 +124,20 @@ int main()
 		"cloud/08/sky8_FR.jpg"
 	};
 	GLuint skyTexture = loadCubemap(faces);
+	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(0.0f, 32.0f), field_size, true, skyTexture);
+	// model view projection matrices and light position
+	glm::mat4 Projection = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
+	glm::mat4 View = glm::lookAt(
+		cameraPos,
+		cameraPos + cameraFront,
+		cameraUp
+	);
+	glm::mat4 Model = glm::mat4(1.0f);
+	glm::vec3 light_direction;
+
+	// sky renderer
+	GLuint skyShader = LoadShaders("skyvertex.glsl", "skyfragment.glsl");
+
 	GLuint skyVAO, skyVBO;
 	glGenVertexArrays(1, &skyVAO);
 	glGenBuffers(1, &skyVBO);
@@ -149,6 +149,7 @@ int main()
 	glUseProgram(skyShader);
 	glUniform1i(glGetUniformLocation(skyShader, "skybox"), 0);
 	glBindVertexArray(0);
+
 
 	while (!quit)
 	{
@@ -166,8 +167,9 @@ int main()
 		);
 	
 		
-		light_position = glm::vec3(1000.0f, 1000.0f, -1000.0f);
-		myOcean.render(elapsedTime * 10.0, light_position, Projection, View, Model, true);
+		// sun light direction
+		light_direction = glm::vec3(0.0f, -1.0f, -0.0f);
+		myOcean.render(elapsedTime * 10.0, light_direction, Projection, View, Model, cameraPos, true);
 		
 		glDepthFunc(GL_LEQUAL);
 		glUseProgram(skyShader);

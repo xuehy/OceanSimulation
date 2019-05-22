@@ -41,12 +41,12 @@ private:
 	unsigned int indices_count;
 	GLuint vbo_vertices, vbo_indices;
 	GLuint glProgram;
-	GLint light_position, projection, view, model;
+	GLint light_direction, projection, view, model, viewPosID, skyBoxID;
 	std::random_device rd{};
 	std::mt19937 generator{ rd() };
 	std::normal_distribution<float> gaussian{ 0.0f, 1.0f };
 public:
-	Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option);
+	Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option, GLuint cubemapTexture);
 	~Ocean();
 	void release();
 	float dispersion(int n_prime, int m_prime);
@@ -56,5 +56,5 @@ public:
 	complex_vector_normal h_D_and_n(glm::vec2 x, float t);
 	void evaluateWaves(float t);
 	void evaluateWavesFFT(float t);
-	void render(float t, glm::vec3 light_pos, glm::mat4 Projection, glm::mat4 View, glm::mat4 Model, bool use_fft);
+	void render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4 View, glm::mat4 Model, glm::vec3 viewPos, bool use_fft);
 };
