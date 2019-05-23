@@ -470,7 +470,7 @@ void Ocean::render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4
 	for (int j = 0; j < NN; j++) {
 		for (int i = 0; i < NN; i++) {
 			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i-NN/2), 0, length * -(j-NN/2)));
-			Model = glm::scale(Model, glm::vec3(1.02f, 1.02f, 1.02f));
+			Model = glm::scale(Model, glm::vec3(1.01f, 1.01f, 1.01f));
 			
 			glUniformMatrix4fv(model, 1, GL_FALSE, &Model[0][0]);
 			glDrawElements(option ? GL_LINES : GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, 0);
