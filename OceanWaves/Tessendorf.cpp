@@ -119,7 +119,7 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 	for (int j = 0; j < NN; j++) {
 		for (int i = 0; i < NN; i++) {
 			glm::mat4 tModel = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i - NN / 2), 0, length * -(j - NN / 2)));
-			tModel = glm::scale(tModel, glm::vec3(1.001f, 1.001f, 1.001f));
+			tModel = glm::scale(tModel, glm::vec3(1.005f, 1.005f, 1.005f));
 			models[indexsd++] = tModel;
 			
 			//glUniformMatrix4fv(model, 1, GL_FALSE, &tModel[0][0]);

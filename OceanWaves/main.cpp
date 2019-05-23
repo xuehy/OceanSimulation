@@ -12,7 +12,7 @@ using namespace std;
 
 bool quit = false;
 int Grid_Size = 160;
-float field_size = 32;
+float field_size = 16;
 // rotation angles and viewpoint
 float pitch = glm::degrees(atan(50.0f/ 50.0f)), yaw = 90.0f;
 glm::vec3 cameraPos = glm::vec3(0, 50, 50);
@@ -130,7 +130,7 @@ int main()
 	};
 	GLuint skyTexture = loadCubemap(faces);
 	GLuint oceanTexture = loadTextureImage("cloud/ocean.jpg");
-	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(16.0f, 32.0f), field_size, false, skyTexture, oceanTexture);
+	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(4.0f, 16.0f), field_size, false, skyTexture, oceanTexture);
 	// model view projection matrices and light position
 	glm::mat4 Projection = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 	glm::mat4 View = glm::lookAt(
