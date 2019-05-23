@@ -19,7 +19,7 @@ void main() {
     //fog_factor = min(-gl_Position.z/500.0, 1.0);
  
     light_dir = normalize(light_direction);
-    normal_vector = vec3(inverse(transpose(Model)) * vec4(normalize(normal), 0.0));
+    normal_vector = vec3(inverse(transpose(Model)) * vec4(normal, 0.0));
     FragPos = vec3(Model * vec4(vertex, 1.0));
     tex_coord = texture.xy;
 }

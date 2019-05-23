@@ -42,11 +42,14 @@ private:
 	GLuint vbo_vertices, vbo_indices;
 	GLuint glProgram;
 	GLint light_direction, projection, view, model, viewPosID, skyBoxID;
+	GLuint waterID;
+	GLuint oceanTexture;
+	GLuint skyTexture;
 	std::random_device rd{};
 	std::mt19937 generator{ rd() };
 	std::normal_distribution<float> gaussian{ 0.0f, 1.0f };
 public:
-	Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option, GLuint cubemapTexture);
+	Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option, GLuint cubemapTexture, GLuint oceanTexture);
 	~Ocean();
 	void release();
 	float dispersion(int n_prime, int m_prime);

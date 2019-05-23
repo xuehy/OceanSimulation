@@ -10,7 +10,7 @@
 using namespace std;
 
 bool quit = false;
-int Grid_Size = 64;
+int Grid_Size = 128;
 float field_size = 64;
 // rotation angles and viewpoint
 float pitch = glm::degrees(atan(50.0f/ 50.0f)), yaw = 90.0f;
@@ -113,7 +113,7 @@ int main()
 	//glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-	GLuint programID = LoadShaders("VertexShader.glsl", "FragmentShader.glsl");
+	
 	vector<std::string> faces
 	{
 		"cloud/08/sky8_RT.jpg",
@@ -124,7 +124,8 @@ int main()
 		"cloud/08/sky8_FR.jpg"
 	};
 	GLuint skyTexture = loadCubemap(faces);
-	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(0.0f, 32.0f), field_size, true, skyTexture);
+	GLuint oceanTexture = loadTextureImage("cloud/ocean.jpg");
+	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(0.0f, 32.0f), field_size, false, skyTexture, oceanTexture);
 	// model view projection matrices and light position
 	glm::mat4 Projection = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 	glm::mat4 View = glm::lookAt(

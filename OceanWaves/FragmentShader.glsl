@@ -6,7 +6,7 @@ in vec2 tex_coord;
 //in float fog_factor;
 uniform sampler2D water;
 uniform vec3 viewPos;
-uniform samplerCube skybox;
+uniform samplerCube sky;
 out vec4 fragColor;
 
 // ambient light + sunlight (reflection and specular) * sky (reflection and specular)
@@ -26,9 +26,9 @@ void main (void) {
     float coeff = max(dot(norm, -lightdir), 0);
 	sunlight = coeff * sunlight;
 
-	vec4 ambient_color  = vec4(0.0, 0.65, 0.75, 1.0);
-    vec4 diffuse_color  = vec4(0.5, 0.65, 0.75, 1.0);
-    vec4 specular_color = vec4(1.0, 0.25, 0.0,  1.0);
+	vec4 ambient_color  = texture(water, tex_coord);
+    vec4 diffuse_color  = vec4(0.34, 0.98, 1.0, 1.0);
+    vec4 specular_color = vec4(0.56, 0.48, 0.06,  1.0);
  
 	// sunlight reflection and refraction
 	vec3 reflectDir = reflect(lightdir, norm);
@@ -41,7 +41,7 @@ void main (void) {
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
 
 	// 这里不应该一样
-	vec4 sunSpecular = vec4(fresnel) * sunlight * spec;
+	vec4 sunSpecular = vec4(fresnel) * specular_color * spec;
 	vec4 diffuse = vec4(1.0 - fresnel) * diffuse_color * coeff;
 
 	// skymap
@@ -50,14 +50,16 @@ void main (void) {
 	fresnelScale = 1.0;
 	vec3 R = reflect(- viewDir, norm);
 	fresnel = fresnelBias + fresnelScale * pow(min(0.0, 1.0-dot(-R, norm)), fresnelPower);
-	vec4 skySpecular = texture(skybox, R).rgba * vec4(fresnel);
-
+	vec4 skySpecular = texture(sky, R).rgba * vec4(fresnel);
+	
     // compute sky texture
-    float ambient_contribution  = 0.30;
-    float diffuse_contribution  = 0.30;
+    float ambient_contribution  = 0.3;
+    float diffuse_contribution  = 0.80;
     float specular_contribution = 1.80;
  
-    fragColor = ambient_color  * ambient_contribution + specular_contribution * skySpecular * sunSpecular + diffuse_contribution * diffuse;
+    fragColor = ambient_color  * ambient_contribution
+	            + specular_contribution * skySpecular * sunSpecular
+				+ diffuse_contribution * diffuse;
 //            ambient_color  * ambient_contribution  * c +
 //            diffuse_color  * diffuse_contribution  * c * max(d, 0) +
 //                    (facing ?
@@ -66,5 +68,4 @@ void main (void) {
 // 
     //fragColor = fragColor * (1.0-fog_factor) + vec4(0.25, 0.75, 0.65, 1.0) * (fog_factor);
  
-    fragColor.a = 1.0;
 }
