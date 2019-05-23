@@ -96,7 +96,7 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 	light_direction = glGetUniformLocation(glProgram, "light_direction");
 	projection = glGetUniformLocation(glProgram, "Projection");
 	view = glGetUniformLocation(glProgram, "View");
-	model = glGetUniformLocation(glProgram, "Model");
+
 	viewPosID = glGetUniformLocation(glProgram, "viewPos");
 	skyBoxID = glGetUniformLocation(glProgram, "sky");
 	waterID = glGetUniformLocation(glProgram, "water");
@@ -110,6 +110,39 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 
 	skyTexture = cubemapTexture;
 	this->oceanTexture = oceanTexture;
+
+
+	// repeat to make N x N fields
+	int NN = repeatN;
+	glm::mat4* models = new glm::mat4[NN * NN];
+	int indexsd = 0;
+	for (int j = 0; j < NN; j++) {
+		for (int i = 0; i < NN; i++) {
+			glm::mat4 tModel = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i - NN / 2), 0, length * -(j - NN / 2)));
+			tModel = glm::scale(tModel, glm::vec3(1.001f, 1.001f, 1.001f));
+			models[indexsd++] = tModel;
+			
+			//glUniformMatrix4fv(model, 1, GL_FALSE, &tModel[0][0]);
+		}
+	}
+	
+	glGenBuffers(1, &modelbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, modelbuffer);
+	glBufferData(GL_ARRAY_BUFFER, NN * NN * sizeof(glm::mat4), &models[0], GL_STATIC_DRAW);
+	GLsizei vec4Size = sizeof(glm::vec4);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
+	glEnableVertexAttribArray(5);
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+	glEnableVertexAttribArray(6);
+	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+	glVertexAttribDivisor(3, 1);
+	glVertexAttribDivisor(4, 1);
+	glVertexAttribDivisor(5, 1);
+	glVertexAttribDivisor(6, 1);
 
 #ifdef USE_GPU
 	Check(cudaMallocHost((void**)& host_in, 5 * N * N * sizeof(cufftComplex)));
@@ -446,7 +479,7 @@ void Ocean::render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4
 	glUniform3f(light_direction, light_dir.x, light_dir.y, light_dir.z);
 	glUniformMatrix4fv(projection, 1, GL_FALSE, &Projection[0][0]);
 	glUniformMatrix4fv(view, 1, GL_FALSE, &View[0][0]);
-	glUniformMatrix4fv(model, 1, GL_FALSE, &Model[0][0]);
+	
 	glUniform3f(viewPosID, viewPos.x, viewPos.y, viewPos.z);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTexture);
@@ -465,15 +498,6 @@ void Ocean::render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 15 * sizeof(float), (void*)offsetof(wave_vertex, htilde0));
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
-	// repeat to make 10 x 10 fields
-	int NN = 50;
-	for (int j = 0; j < NN; j++) {
-		for (int i = 0; i < NN; i++) {
-			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i-NN/2), 0, length * -(j-NN/2)));
-			Model = glm::scale(Model, glm::vec3(1.01f, 1.01f, 1.01f));
-			
-			glUniformMatrix4fv(model, 1, GL_FALSE, &Model[0][0]);
-			glDrawElements(option ? GL_LINES : GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, 0);
-		}
-	}
+	
+	glDrawElementsInstanced(option ? GL_LINES : GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, 0, repeatN*repeatN);
 }

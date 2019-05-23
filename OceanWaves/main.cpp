@@ -7,11 +7,11 @@
 #include "Tessendorf.h"
 #include "genTexture.h"
 #include "common.h"
+#include <windows.h>
 using namespace std;
 
-
 bool quit = false;
-int Grid_Size = 156;
+int Grid_Size = 160;
 float field_size = 32;
 // rotation angles and viewpoint
 float pitch = glm::degrees(atan(50.0f/ 50.0f)), yaw = 90.0f;
@@ -103,7 +103,7 @@ int main()
 	// ¿¹¾â³Ý
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glEnable(GL_MULTISAMPLE);
-	GLFWwindow* window = glfwCreateWindow(width, height, "Hello OpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "Ocean Simulation", NULL, NULL);
 	if (!window) {
 		cerr << "Error: could not open window with GLFW3" << endl;
 		glfwTerminate();
@@ -192,6 +192,8 @@ int main()
 		glBindVertexArray(0);
 		glDepthFunc(GL_LESS); // set depth function back to default
 		
+	
+	
 		glfwPollEvents();
 		glfwSwapBuffers(window);
 	}

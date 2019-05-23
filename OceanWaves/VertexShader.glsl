@@ -2,10 +2,10 @@
 layout(location = 0) in vec3 vertex;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 texture;
-
+layout(location = 3) in mat4 Model;
 uniform mat4 Projection;
 uniform mat4 View;
-uniform mat4 Model;
+//uniform mat4 Model;
 uniform vec3 light_direction;
  
 out vec3 light_dir;

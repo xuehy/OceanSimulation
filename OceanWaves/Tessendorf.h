@@ -35,6 +35,7 @@ class Ocean
 {
 private:
 	const float PI = 3.141592654f;
+	const int repeatN = 30;
 	bool option;
 	float g;
 	int N, Nplus1;
@@ -49,14 +50,14 @@ private:
 	unsigned int indices_count;
 	GLuint vbo_vertices, vbo_indices;
 	GLuint glProgram;
-	GLint light_direction, projection, view, model, viewPosID, skyBoxID;
+	GLint light_direction, projection, view, viewPosID, skyBoxID;
 	GLuint waterID;
 	GLuint oceanTexture;
 	GLuint skyTexture;
 	std::random_device rd{};
 	std::mt19937 generator{ rd() };
 	std::normal_distribution<float> gaussian{ 0.0f, 1.0f };
-
+	GLuint modelbuffer;
 	cufftComplex* host_in, * host_out, * device_in, * device_out;
 	cufftHandle /*cufftForwrdHandleRow, cufftForwrdHandleCol, */cufftForwrdHandle;
 public:
