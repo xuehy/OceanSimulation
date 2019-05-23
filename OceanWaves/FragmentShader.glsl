@@ -26,15 +26,15 @@ void main (void) {
     float coeff = max(dot(norm, -lightdir), 0);
 	sunlight = coeff * sunlight;
 
-	vec4 ambient_color  = texture(water, tex_coord);
-    vec4 diffuse_color  = vec4(0.34, 0.98, 1.0, 1.0);
+	vec4 ambient_color  = vec4(0.0, 0.65, 0.75, 1.0);
+    vec4 diffuse_color  = vec4(0.5, 0.65, 0.75, 1.0);
     vec4 specular_color = vec4(0.56, 0.48, 0.06,  1.0);
  
 	// sunlight reflection and refraction
 	vec3 reflectDir = reflect(lightdir, norm);
 	float e = 1.0f / 1.34f;
 	vec3 refractDir = refract(lightdir, norm, e);
-	float fresnelBias = 0.5;
+	float fresnelBias = 0.3;
 	float fresnelPower = 0.6;
 	float fresnelScale = 1.0;
 	float fresnel = fresnelBias + fresnelScale * pow(min(0.0, 1.0-dot(lightdir, norm)), fresnelPower);
@@ -46,20 +46,20 @@ void main (void) {
 
 	// skymap
 	fresnelBias = 0.6;
-	fresnelPower = 0.6;
+	fresnelPower = 0.3;
 	fresnelScale = 1.0;
 	vec3 R = reflect(- viewDir, norm);
 	fresnel = fresnelBias + fresnelScale * pow(min(0.0, 1.0-dot(-R, norm)), fresnelPower);
 	vec4 skySpecular = texture(sky, R).rgba * vec4(fresnel);
-	
+	vec4 skyDiffuse = texture(sky, R).rgba * vec4(1.0f - fresnel);
     // compute sky texture
-    float ambient_contribution  = 0.3;
-    float diffuse_contribution  = 0.80;
-    float specular_contribution = 1.80;
+    float ambient_contribution  = 0.6;
+    float diffuse_contribution  = 1.2;
+    float specular_contribution = 3.0;
  
-    fragColor = ambient_color  * ambient_contribution
-	            + specular_contribution * skySpecular * sunSpecular
-				+ diffuse_contribution * diffuse;
+    fragColor =  specular_contribution * skySpecular * sunSpecular + ambient_color *  diffuse * ambient_contribution + diffuse_contribution * skyDiffuse;
+	          //  +
+				//+ diffuse_contribution * skyDiffuse;
 //            ambient_color  * ambient_contribution  * c +
 //            diffuse_color  * diffuse_contribution  * c * max(d, 0) +
 //                    (facing ?

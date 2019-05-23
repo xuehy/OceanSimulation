@@ -9,9 +9,10 @@
 #include "common.h"
 using namespace std;
 
+
 bool quit = false;
-int Grid_Size = 128;
-float field_size = 64;
+int Grid_Size = 156;
+float field_size = 32;
 // rotation angles and viewpoint
 float pitch = glm::degrees(atan(50.0f/ 50.0f)), yaw = 90.0f;
 glm::vec3 cameraPos = glm::vec3(0, 50, 50);
@@ -44,6 +45,10 @@ void processInput(GLFWwindow* window)
 		fov = 45.0f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		quit = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		quit = true;
 	}
@@ -116,16 +121,16 @@ int main()
 	
 	vector<std::string> faces
 	{
-		"cloud/08/sky8_RT.jpg",
-		"cloud/08/sky8_LF.jpg",
-		"cloud/08/sky8_UP.jpg",
-		"cloud/08/sky8_DN.jpg",
-		"cloud/08/sky8_BK.jpg",
-		"cloud/08/sky8_FR.jpg"
+		"cloud/14/sky14_RT.jpg",
+		"cloud/14/sky14_LF.jpg",
+		"cloud/14/sky14_UP.jpg",
+		"cloud/14/sky14_DN.jpg",
+		"cloud/14/sky14_BK.jpg",
+		"cloud/14/sky14_FR.jpg"
 	};
 	GLuint skyTexture = loadCubemap(faces);
 	GLuint oceanTexture = loadTextureImage("cloud/ocean.jpg");
-	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(0.0f, 32.0f), field_size, false, skyTexture, oceanTexture);
+	Ocean myOcean(Grid_Size, 0.0005f, glm::vec2(16.0f, 32.0f), field_size, false, skyTexture, oceanTexture);
 	// model view projection matrices and light position
 	glm::mat4 Projection = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 	glm::mat4 View = glm::lookAt(
@@ -158,6 +163,7 @@ int main()
 		
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
+		cout << 1.0 / deltaTime << "FPS" << endl;
 		lastFrame = currentFrame;
 		elapsedTime += deltaTime;
 		processInput(window);
@@ -169,7 +175,7 @@ int main()
 	
 		
 		// sun light direction
-		light_direction = glm::vec3(0.0f, -1.0f, -0.0f);
+		light_direction = glm::vec3(1.0f, -0.3f, -0.4f);
 		myOcean.render(elapsedTime * 10.0, light_direction, Projection, View, Model, cameraPos, true);
 		
 		glDepthFunc(GL_LEQUAL);

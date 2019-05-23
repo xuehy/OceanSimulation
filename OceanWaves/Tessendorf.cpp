@@ -1,4 +1,13 @@
 #include "Tessendorf.h"
+void Check(cudaError_t status)
+{
+	if (status != cudaSuccess)
+	{
+		std::cout << "ÐÐºÅ:" << __LINE__ << std::endl;
+		std::cout << "´íÎó:" << cudaGetErrorString(status) << std::endl;
+	}
+}
+
 Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option, GLuint cubemapTexture,
 	GLuint oceanTexture) :
 	g(9.81), option(option), N(N), Nplus1(N + 1), A(A), w(w), length(length),
@@ -6,13 +15,15 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 	h_tilde_dx(0), h_tilde_dz(0), fft(0)
 {
 	generator.seed(12131324);
-	
+
 	h_tilde = new complex[N * N];
 	h_tilde_slopex = new complex[N * N];
 	h_tilde_slopez = new complex[N * N];
 	h_tilde_dx = new complex[N * N];
 	h_tilde_dz = new complex[N * N];
+#ifndef USE_GPU
 	fft = new cFFT(N);
+#endif
 	vertices = new wave_vertex[(long long)Nplus1 * (long long)Nplus1];
 	indices = new unsigned int[(long long)Nplus1 * (long long)Nplus1 * 10];
 
@@ -20,7 +31,7 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 	complex htilde0, htilde0mk_conj;
 
 	// initialize vertices of the ocean mesh
-	for(int m_prime = 0; m_prime < Nplus1; m_prime++)
+	for (int m_prime = 0; m_prime < Nplus1; m_prime++)
 		for (int n_prime = 0; n_prime < Nplus1; n_prime++)
 		{
 			index = m_prime * Nplus1 + n_prime;
@@ -39,11 +50,11 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 			vertices[index].position.z = vertices[index].v.z = (m_prime - N / 2.0f) * length / N;
 
 			vertices[index].normal.x = 0.0f;
-			vertices[index].normal.y = 1.0f; 
+			vertices[index].normal.y = 1.0f;
 			vertices[index].normal.z = 0.0f;
 		}
 	indices_count = 0;
-	for(int m_prime = 0; m_prime < N; m_prime++)
+	for (int m_prime = 0; m_prime < N; m_prime++)
 		for (int n_prime = 0; n_prime < N; n_prime++)
 		{
 			index = m_prime * Nplus1 + n_prime;
@@ -81,7 +92,7 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 			}
 		}
 	glProgram = LoadShaders("VertexShader.glsl", "FragmentShader.glsl");
-	
+
 	light_direction = glGetUniformLocation(glProgram, "light_direction");
 	projection = glGetUniformLocation(glProgram, "Projection");
 	view = glGetUniformLocation(glProgram, "View");
@@ -99,8 +110,44 @@ Ocean::Ocean(const int N, const float A, const glm::vec2 w, const float length, 
 
 	skyTexture = cubemapTexture;
 	this->oceanTexture = oceanTexture;
-}
 
+#ifdef USE_GPU
+	Check(cudaMallocHost((void**)& host_in, 5 * N * N * sizeof(cufftComplex)));
+	Check(cudaMallocHost((void**)& host_out, 5 * N * N * sizeof(cufftComplex)));
+	Check(cudaMalloc((void**)& device_in, 5 * N * N * sizeof(cufftComplex)));
+	Check(cudaMalloc((void**)& device_out, 5 * N * N * sizeof(cufftComplex)));
+	
+	int n[2] = { N, N };
+	int imbed[2] = { 5 * N, N};
+	cufftPlanMany(&cufftForwrdHandle, 2, n, imbed, 1, N* N,
+		imbed, 1, N* N, CUFFT_C2C, 5);
+#endif
+}
+#ifdef USE_GPU
+void Ocean::cuFFT(complex** input,  complex** output)
+{
+	
+	for (int i = 0; i < 5; i++)
+		for(int j = 0; j < N * N; ++j)
+	{
+		host_in[j + i * N * N].x = input[i][j].real();
+		host_in[j + i * N * N].y = input[i][j].imag();
+		
+	}
+	Check(cudaMemcpy(device_in, host_in, 5 * N * N *sizeof(cufftComplex), cudaMemcpyHostToDevice));
+	//cufftExecC2C(cufftForwrdHandleRow, device_in, device_out, CUFFT_FORWARD);
+	//cufftExecC2C(cufftForwrdHandleCol, device_out, device_in, CUFFT_FORWARD);
+	cufftExecC2C(cufftForwrdHandle, device_in, device_out, CUFFT_FORWARD);
+	Check(cudaMemcpy(host_out, device_out, 5 * N * N * sizeof(cufftComplex), cudaMemcpyDeviceToHost));
+	for (int j = 0; j < 5; j++)
+		for(int i = 0; i < N * N; ++i)
+	{
+		output[j][i].real( host_out[j * N * N + i].x);
+		output[j][i].imag( host_out[j* N * N + i].y);
+		
+	}
+}
+#endif
 Ocean::~Ocean()
 {
 	if (h_tilde) delete[] h_tilde;
@@ -117,6 +164,13 @@ void Ocean::release()
 {
 	glDeleteBuffers(1, &vbo_indices);
 	glDeleteBuffers(1, &vbo_vertices);
+#ifdef USE_GPU
+	Check(cudaFreeHost(host_in));
+	Check(cudaFreeHost(host_out));
+	Check(cudaFree(device_in));
+	Check(cudaFree(device_out));
+	Check(cudaDeviceReset());
+#endif
 }
 
 float Ocean::dispersion(int n_prime, int m_prime)
@@ -292,7 +346,11 @@ void Ocean::evaluateWavesFFT(float t)
 			}
 		}
 	}
-
+#ifdef USE_GPU
+	complex* in_[] = { h_tilde, h_tilde_slopex, h_tilde_slopez, h_tilde_dx, h_tilde_dz };
+	complex* out_[] = { h_tilde, h_tilde_slopex, h_tilde_slopez, h_tilde_dx, h_tilde_dz };
+	cuFFT(in_, out_);
+#else
 	for (int m_prime = 0; m_prime < N; m_prime++) {
 		fft->fft(h_tilde, h_tilde, 1, m_prime * N);
 		fft->fft(h_tilde_slopex, h_tilde_slopex, 1, m_prime * N);
@@ -307,6 +365,7 @@ void Ocean::evaluateWavesFFT(float t)
 		fft->fft(h_tilde_dx, h_tilde_dx, N, n_prime);
 		fft->fft(h_tilde_dz, h_tilde_dz, N, n_prime);
 	}
+#endif
 
 	int sign;
 	float signs[] = { 1.0f, -1.0f };
@@ -407,10 +466,11 @@ void Ocean::render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
 	// repeat to make 10 x 10 fields
-	for (int j = 0; j < 1; j++) {
-		for (int i = 0; i < 1; i++) {
-			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i), 0, length * -(j)));
-			Model = glm::scale(Model, glm::vec3(1.0f, 1.0f, 1.0f));
+	int NN = 50;
+	for (int j = 0; j < NN; j++) {
+		for (int i = 0; i < NN; i++) {
+			Model = glm::translate(glm::mat4(1.0f), glm::vec3(length * (i-NN/2), 0, length * -(j-NN/2)));
+			Model = glm::scale(Model, glm::vec3(1.02f, 1.02f, 1.02f));
 			
 			glUniformMatrix4fv(model, 1, GL_FALSE, &Model[0][0]);
 			glDrawElements(option ? GL_LINES : GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, 0);

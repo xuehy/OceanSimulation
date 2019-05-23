@@ -1,5 +1,7 @@
 #pragma once
-float skyboxVertices[] = {
+#define USE_GPU
+
+static const float skyboxVertices[] = {
 	// positions          
 	-1.0f,  1.0f, -1.0f,
 	-1.0f, -1.0f, -1.0f,

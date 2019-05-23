@@ -2,11 +2,19 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <complex>
 #include <random>
 #include "loadShader.h"
 #include "cFFT.h"
+#include <cufft.h>
+#include <cuda.h>
+#include <cudalibxt.h>
+#include <cuda_runtime_api.h>
+#include <device_launch_parameters.h>
+#include <complex>
+#include "common.h"
 using complex = std::complex<float>;
+
+
 struct wave_vertex
 {
 	glm::vec3 v; // current position
@@ -48,6 +56,9 @@ private:
 	std::random_device rd{};
 	std::mt19937 generator{ rd() };
 	std::normal_distribution<float> gaussian{ 0.0f, 1.0f };
+
+	cufftComplex* host_in, * host_out, * device_in, * device_out;
+	cufftHandle /*cufftForwrdHandleRow, cufftForwrdHandleCol, */cufftForwrdHandle;
 public:
 	Ocean(const int N, const float A, const glm::vec2 w, const float length, bool option, GLuint cubemapTexture, GLuint oceanTexture);
 	~Ocean();
@@ -60,4 +71,7 @@ public:
 	void evaluateWaves(float t);
 	void evaluateWavesFFT(float t);
 	void render(float t, glm::vec3 light_dir, glm::mat4 Projection, glm::mat4 View, glm::mat4 Model, glm::vec3 viewPos, bool use_fft);
+#ifdef USE_GPU
+	void cuFFT(complex** input, complex** output);
+#endif
 };
