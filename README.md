@@ -17,3 +17,6 @@ Requirements:
 + Move the mouse to rotate the camera.
 
 [1] Tessendorf, Jerry. "Simulating ocean water." Simulating nature: realistic and interactive techniques. SIGGRAPH 1.2 (2001): 5.
+
+## License
+MIT licensed.
