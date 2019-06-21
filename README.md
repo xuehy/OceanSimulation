@@ -3,6 +3,7 @@ Ocean wave simulation with OpenGL GLSL and CUDA, using Tessendorf Waves[1] with 
 
 [![Demo](https://img.youtube.com/vi/-RGcm5TiJcs/hqdefault.jpg)](https://youtu.be/-RGcm5TiJcs)
 
+## Source
 Requirements:
 
 + CUDA
@@ -10,7 +11,7 @@ Requirements:
 + GLM
 + VS2019
 
-Binary Demo:
+## Binary Demo:
 [OceanSimulation-win64-CUDA](https://github.com/xuehy/OceanSimulation/blob/master/OceanSim-win64-cuda.zip)
 + Press W/S/A/D to move the camera forward/backward/left/right.
 + Move the mouse to rotate the camera.
